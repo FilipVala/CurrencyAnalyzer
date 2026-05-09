@@ -1,0 +1,54 @@
+﻿@page "/login"
+@using CurrencyAnalyzer.Core.Interfaces
+@using CurrencyAnalyzer.Core.Models
+
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Přihlášení - Měnový Analyzátor</PageTitle>
+
+<div style="max-width: 420px; margin: 80px auto; padding: 30px; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    <h3>Přihlášení</h3>
+    <p><small><strong>admin</strong> / <strong>stin2026</strong></small></p>
+
+    <EditForm Model="loginModel" OnValidSubmit="HandleLoginAsync">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label class="form-label">Uživatelské jméno</label>
+            <InputText @bindValue="loginModel.Username" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Heslo</label>
+            <InputText type="password" @bindValue="loginModel.Password" class="form-control" />
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Přihlásit se</button>
+    </EditForm>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-3">@errorMessage</div>
+    }
+</div>
+
+@code {
+    private LoginModel loginModel = new();
+    private string? errorMessage = null;
+
+    private async Task HandleLoginAsync()
+    {
+        errorMessage = null;
+        var success = await AuthService.LoginAsync(loginModel.Username, loginModel.Password);
+
+        if (success)
+        {
+            NavigationManager.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            errorMessage = "Nesprávné přihlašovací údaje!";
+        }
+    }
+}
