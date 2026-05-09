@@ -15,8 +15,11 @@ builder.Services.AddHttpClient<IExchangeRateService, ExchangeRateService>(client
     client.Timeout = TimeSpan.FromSeconds(10);
 });
 
-// Pro budoucí použití (až budeme mít AnalyticsService)
+// === Služby z Core projektu ===
+builder.Services.AddHttpClient<IExchangeRateService, ExchangeRateService>();
+
 builder.Services.AddScoped<IExchangeRateService, ExchangeRateService>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 
 var app = builder.Build();
 
