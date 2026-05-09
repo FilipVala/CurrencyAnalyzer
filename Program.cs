@@ -1,10 +1,22 @@
 using CurrencyAnalyzer.Components;
+using CurrencyAnalyzer.Core.Interfaces;
+using CurrencyAnalyzer.Core.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// === Přidat tyto řádky ===
+builder.Services.AddHttpClient<IExchangeRateService, ExchangeRateService>(client =>
+{
+    client.BaseAddress = new Uri("https://api.exchangerate.host");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+
+// Pro budoucí použití (až budeme mít AnalyticsService)
+builder.Services.AddScoped<IExchangeRateService, ExchangeRateService>();
 
 var app = builder.Build();
 
