@@ -5,6 +5,13 @@ namespace CurrencyAnalyzer.Core.Services;
 
 public class AnalyticsService : IAnalyticsService
 {
+    private readonly IExchangeRateService _exchangeRateService;
+
+    public AnalyticsService(IExchangeRateService exchangeRateService)
+    {
+        _exchangeRateService = exchangeRateService;
+    }
+
     public (string Currency, decimal Rate) GetStrongestCurrency(Dictionary<string, decimal> rates)
     {
         if (rates == null || rates.Count == 0)
@@ -34,7 +41,20 @@ public class AnalyticsService : IAnalyticsService
     public async Task<AnalysisResult> PerformFullAnalysisAsync(string baseCurrency,
         IEnumerable<string> selectedCurrencies)
     {
-        // Tady bude později volání IExchangeRateService
-        throw new NotImplementedException("Bude implementováno po propojení se service");
+        var rates = await _exchangeRateService.GetCurrentRatesForAnalysisAsync(baseCurrency, selectedCurrencies);
+
+        var strongest = GetStrongestCurrency(rates);
+        var weakest = GetWeakestCurrency(rates);
+        var average = CalculateAverageRate(rates);
+
+        return new AnalysisResult
+        {
+            BaseCurrency = baseCurrency,
+            Rates = rates,
+            Strongest = strongest,
+            Weakest = weakest,
+            AverageRate = average,
+            CalculatedAt = DateTime.UtcNow
+        };
     }
 }
