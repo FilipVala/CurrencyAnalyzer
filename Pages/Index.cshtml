@@ -1,10 +1,41 @@
-﻿@page
-@model IndexModel
-@{
-    ViewData["Title"] = "Home page";
-}
+﻿@page "/"
+@using CurrencyAnalyzer.Core.Interfaces
+@using CurrencyAnalyzer.Core.Models
+@using Microsoft.AspNetCore.Components
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@inject IAuthService AuthService
+@inject IUserSettingsService SettingsService
+@inject IAnalyticsService AnalyticsService
+@inject NavigationManager Navigation
+
+<h1>Měnový Analyzátor</h1>
+
+<p><strong>Přihlášený:</strong> @AuthService.GetCurrentUsername()</p>
+
+<button onclick="@LoadRates">Načíst kurzy</button>
+<button onclick="@Logout">Odhlásit se</button>
+
+@functions {
+    private async Task LoadRates()
+    {
+        try
+        {
+            var settings = await SettingsService.GetSettingsAsync();
+            var result = await AnalyticsService.PerformFullAnalysisAsync(
+                settings.BaseCurrency, settings.SelectedCurrencies);
+
+            Console.WriteLine($"Nejsilnější: {result.Strongest.Currency}");
+            Console.WriteLine($"Nejslabší: {result.Weakest.Currency}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Chyba: " + ex.Message);
+        }
+    }
+
+    private void Logout()
+    {
+        AuthService.Logout();
+        Navigation.NavigateTo("/login", true);
+    }
+}
