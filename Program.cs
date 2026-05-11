@@ -17,6 +17,7 @@ builder.Services.AddHttpClient<IExchangeRateService, ExchangeRateService>(client
 
 // Pro budoucí použití (až budeme mít AnalyticsService)
 builder.Services.AddScoped<IExchangeRateService, ExchangeRateService>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 
 var app = builder.Build();
 
