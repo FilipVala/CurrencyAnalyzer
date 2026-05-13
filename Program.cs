@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -20,10 +21,12 @@ builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddSingleton<IAuthService, AuthService>();
+builder.Services.AddScoped<MockExchangeRateService>();
+builder.Services.AddScoped<ExchangeRateService>();
 
 // DŮLEŽITÉ: Pouze jeden z těchto dvou!
-builder.Services.AddScoped<IExchangeRateService, MockExchangeRateService>();     // ← Mock (doporučeno teď)
-// builder.Services.AddScoped<IExchangeRateService, ExchangeRateService>();     // ← reálné API (až později)
+//builder.Services.AddScoped<IExchangeRateService, MockExchangeRateService>();     // ← Mock (doporučeno teď)
+builder.Services.AddScoped<IExchangeRateService, ExchangeRateService>();     // ← reálné API (až později)
 
 // HTTP client pro případ, že bys chtěl reálnou službu
 builder.Services.AddHttpClient<ExchangeRateService>(client =>
