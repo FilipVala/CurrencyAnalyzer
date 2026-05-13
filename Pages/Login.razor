@@ -12,17 +12,22 @@
     <h3>Přihlášení</h3>
     <p><small><strong>admin</strong> / <strong>stin2026</strong></small></p>
 
-    <EditForm Model="loginModel" OnValidSubmit="HandleLoginAsync">
+    <EditForm Model="loginModel" OnValidSubmit="HandleLoginAsync" FormName="loginForm">
         <DataAnnotationsValidator />
 
         <div class="mb-3">
             <label class="form-label">Uživatelské jméno</label>
-            <InputText @bindValue="loginModel.Username" class="form-control" />
+            <InputText class="form-control"
+                       @bind-Value="loginModel.Username"
+                       @bind-Value:event="oninput" />
         </div>
 
         <div class="mb-3">
             <label class="form-label">Heslo</label>
-            <InputText type="password" @bindValue="loginModel.Password" class="form-control" />
+            <InputText type="password"
+                       class="form-control"
+                       @bind-Value="loginModel.Password"
+                       @bind-Value:event="oninput" />
         </div>
 
         <button type="submit" class="btn btn-primary w-100">Přihlásit se</button>
@@ -49,7 +54,9 @@
         }
         else
         {
+            Console.WriteLine($"LOGIN: {loginModel.Username} / {loginModel.Password}");
             errorMessage = "Nesprávné přihlašovací údaje!";
         }
+
     }
 }
