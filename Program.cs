@@ -1,6 +1,8 @@
 using CurrencyAnalyzer.Components;
 using CurrencyAnalyzer.Core.Interfaces;
 using CurrencyAnalyzer.Core.Services;
+using CurrencyAnalyzer.Core.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,8 +20,13 @@ builder.Services.AddHttpClient<IExchangeRateService, ExchangeRateService>(client
 // === Služby z Core projektu ===
 builder.Services.AddHttpClient<IExchangeRateService, ExchangeRateService>();
 
-builder.Services.AddScoped<IExchangeRateService, ExchangeRateService>();
+//builder.Services.AddScoped<IExchangeRateService, ExchangeRateService>();
+builder.Services.AddScoped<IExchangeRateService, MockExchangeRateService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite("Data Source=CurrencyAnalyzer.db"));
 
 var app = builder.Build();
 
