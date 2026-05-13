@@ -1,0 +1,97 @@
+﻿@page "/dashboard"
+
+@using CurrencyAnalyzer.Core.Interfaces
+@using CurrencyAnalyzer.Core.Models
+
+@inject IAnalyticsService AnalyticsService
+@inject IUserSettingsService UserSettingsService
+
+<PageTitle>Dashboard</PageTitle>
+
+<h3>Currency Dashboard</h3>
+
+@if (isLoading)
+{
+    <p>Loading analysis...</p>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <p style="color:red">@errorMessage</p>
+}
+else if (analysisResult != null)
+{
+    <div class="mb-4">
+        <p><strong>Base Currency:</strong> @analysisResult.BaseCurrency</p>
+        <p>
+            <strong>Strongest Currency:</strong>
+            @analysisResult.Strongest.Currency
+            (@analysisResult.Strongest.Rate)
+        </p>
+
+        <p>
+            <strong>Weakest Currency:</strong>
+            @analysisResult.Weakest.Currency
+            (@analysisResult.Weakest.Rate)
+        </p>
+
+        <p>
+            <strong>Average Rate:</strong>
+            @analysisResult.AverageRate
+        </p>
+
+        <p>
+            <strong>Calculated At:</strong>
+            @analysisResult.CalculatedAt
+        </p>
+    </div>
+
+    <h4>Rates</h4>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Currency</th>
+                <th>Rate</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var rate in analysisResult.Rates)
+            {
+                <tr>
+                    <td>@rate.Key</td>
+                    <td>@rate.Value</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+
+    private AnalysisResult? analysisResult;
+
+    private bool isLoading = true;
+
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var settings = await UserSettingsService.GetSettingsAsync();
+
+            analysisResult = await AnalyticsService.PerformFullAnalysisAsync(
+                settings.BaseCurrency,
+                settings.SelectedCurrencies);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
