@@ -108,11 +108,6 @@ else
     protected override async Task OnInitializedAsync()
     {
         settings = await UserSettingsService.GetSettingsAsync();
-
-        if (!settings.SelectedCurrencies.Contains(settings.BaseCurrency))
-        {
-            settings.SelectedCurrencies.Add(settings.BaseCurrency);
-        }
     }
 
     private bool IsSelected(string currency)
@@ -134,9 +129,7 @@ else
         if (isChecked)
         {
             if (!settings.SelectedCurrencies.Contains(currency))
-            {
                 settings.SelectedCurrencies.Add(currency);
-            }
         }
         else
         {
@@ -148,11 +141,6 @@ else
     {
         if (settings == null)
             return;
-
-        if (!settings.SelectedCurrencies.Contains(settings.BaseCurrency))
-        {
-            settings.SelectedCurrencies.Add(settings.BaseCurrency);
-        }
 
         await UserSettingsService.SaveSettingsAsync(settings);
 
