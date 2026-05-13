@@ -1,0 +1,112 @@
+﻿@page "/settings"
+
+@using CurrencyAnalyzer.Core.Models
+@using CurrencyAnalyzer.Core.Interfaces
+
+@inject IUserSettingsService UserSettingsService
+
+<PageTitle>Settings</PageTitle>
+
+<h1>Settings</h1>
+
+<div class="card p-4">
+
+    <div class="mb-3">
+        <label class="form-label">Base Currency</label>
+
+        <select class="form-select" @bind="UserSettings.BaseCurrency">
+            @foreach (var currency in AvailableCurrencies)
+            {
+                <option value="@currency">@currency</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Selected Currencies</label>
+
+        @foreach (var currency in AvailableCurrencies)
+        {
+            <div class="form-check">
+                <input class="form-check-input"
+                       type="checkbox"
+                       checked="@UserSettings .SelectedCurrencies.Contains(currency)"
+                       @onchange="(e => ToggleCurrency(currency, (bool)e.Value!))" />
+
+                <label class="form-check-label">
+                    @currency
+                </label>
+            </div>
+        }
+    </div>
+
+    <div class="d-flex gap-2">
+        <button class="btn btn-primary" @onclick="SaveSettings">
+            Save Settings
+        </button>
+
+        <button class="btn btn-secondary" @onclick="ResetSettings">
+            Reset Default
+        </button>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(StatusMessage))
+    {
+        <div class="alert alert-success mt-3">
+            @StatusMessage
+        </div>
+    }
+
+</div>
+
+@code {
+
+    private UserSettings UserSettings = new();
+
+    private string StatusMessage = string.Empty;
+
+    private List<string> AvailableCurrencies = new()
+    {
+        "EUR",
+        "USD",
+        "CZK",
+        "GBP",
+        "JPY"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserSettings = await UserSettingsService.GetSettingsAsync();
+    }
+
+    private async Task SaveSettings()
+    {
+        UserSettings.LastUpdated = DateTime.UtcNow;
+
+        await UserSettingsService.SaveSettingsAsync(UserSettings);
+
+        StatusMessage = "Settings saved successfully.";
+    }
+
+    private async Task ResetSettings()
+    {
+        await UserSettingsService.ResetToDefaultAsync();
+
+        UserSettings = await UserSettingsService.GetSettingsAsync();
+
+        StatusMessage = "Settings reset to default.";
+    }
+
+    private void ToggleCurrency(string currency, bool isChecked)
+    {
+        if (isChecked)
+        {
+            if (!UserSettings.SelectedCurrencies.Contains(currency))
+                UserSettings.SelectedCurrencies.Add(currency);
+        }
+        else
+        {
+            UserSettings.SelectedCurrencies.Remove(currency);
+        }
+    }
+}
