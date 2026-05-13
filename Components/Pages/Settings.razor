@@ -1,0 +1,174 @@
+﻿@page "/settings"
+@rendermode InteractiveServer
+
+@using CurrencyAnalyzer.Core.Models
+@using CurrencyAnalyzer.Core.Interfaces
+
+@inject IUserSettingsService UserSettingsService
+@inject NavigationManager Navigation
+
+<PageTitle>Nastavení</PageTitle>
+
+<h1>Nastavení</h1>
+
+@if (settings == null)
+{
+    <p>Načítám...</p>
+}
+else
+{
+    <div class="card p-4">
+
+        <div class="mb-4">
+            <label class="form-label fw-bold">
+                Základní měna
+            </label>
+
+            <select class="form-select"
+                    @bind="settings.BaseCurrency">
+
+                @foreach (var currency in AvailableCurrencies)
+                {
+                    <option value="@currency">
+                        @currency
+                    </option>
+                }
+
+            </select>
+        </div>
+
+        <div class="mb-4">
+
+            <label class="form-label fw-bold">
+                Sledované měny
+            </label>
+
+            @foreach (var currency in AvailableCurrencies)
+            {
+                var isBase = currency == settings.BaseCurrency;
+
+                <div class="form-check mb-2">
+
+                    <input class="form-check-input"
+                           type="checkbox"
+                           checked="@IsSelected(currency)"
+                           disabled="@isBase"
+                           @onchange="(e) => ToggleCurrency(currency, (bool)e.Value!)" />
+
+                    <label class="form-check-label">
+                        @currency
+                    </label>
+
+                </div>
+            }
+
+        </div>
+
+        <div class="d-flex gap-3">
+
+            <button class="btn btn-primary"
+                    @onclick="SaveSettings">
+                💾 Uložit
+            </button>
+
+            <button class="btn btn-secondary"
+                    @onclick="ResetSettings">
+                🔄 Reset
+            </button>
+
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(StatusMessage))
+        {
+            <div class="alert alert-info mt-3">
+                @StatusMessage
+            </div>
+        }
+
+    </div>
+}
+
+@code {
+
+    private UserSettings? settings;
+
+    private string StatusMessage = "";
+
+    private readonly List<string> AvailableCurrencies =
+    [
+        "EUR",
+        "USD",
+        "CZK",
+        "GBP",
+        "JPY",
+        "CHF",
+        "PLN"
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        settings = await UserSettingsService.GetSettingsAsync();
+
+        if (!settings.SelectedCurrencies.Contains(settings.BaseCurrency))
+        {
+            settings.SelectedCurrencies.Add(settings.BaseCurrency);
+        }
+    }
+
+    private bool IsSelected(string currency)
+    {
+        if (settings == null)
+            return false;
+
+        return settings.SelectedCurrencies.Contains(currency);
+    }
+
+    private void ToggleCurrency(string currency, bool isChecked)
+    {
+        if (settings == null)
+            return;
+
+        if (currency == settings.BaseCurrency)
+            return;
+
+        if (isChecked)
+        {
+            if (!settings.SelectedCurrencies.Contains(currency))
+            {
+                settings.SelectedCurrencies.Add(currency);
+            }
+        }
+        else
+        {
+            settings.SelectedCurrencies.Remove(currency);
+        }
+    }
+
+    private async Task SaveSettings()
+    {
+        if (settings == null)
+            return;
+
+        if (!settings.SelectedCurrencies.Contains(settings.BaseCurrency))
+        {
+            settings.SelectedCurrencies.Add(settings.BaseCurrency);
+        }
+
+        await UserSettingsService.SaveSettingsAsync(settings);
+
+        StatusMessage = "✅ Nastavení uloženo";
+
+        Navigation.NavigateTo("/dashboard", true);
+    }
+
+    private async Task ResetSettings()
+    {
+        await UserSettingsService.ResetToDefaultAsync();
+
+        settings = await UserSettingsService.GetSettingsAsync();
+
+        StatusMessage = "🔄 Nastavení resetováno";
+
+        StateHasChanged();
+    }
+}

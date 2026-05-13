@@ -1,45 +1,14 @@
 ﻿@page "/"
-@using CurrencyAnalyzer.Core.Interfaces
-@using CurrencyAnalyzer.Core.Models
 
-@inject IAuthService AuthService
-@inject IUserSettingsService SettingsService
-@inject IAnalyticsService AnalyticsService
+@using Microsoft.AspNetCore.Components
+
 @inject NavigationManager Navigation
 
-<h1>Měnový Analyzátor</h1>
-
-<p><strong>Přihlášený uživatel:</strong> @AuthService.GetCurrentUsername()</p>
-
-<hr />
-
-<button @onclick="LoadRates" class="btn btn-success">Načíst aktuální kurzy</button>
-<button @onclick="Logout" class="btn btn-danger">Odhlásit se</button>
-
-<p>@message</p>
+<h3>Redirecting...</h3>
 
 @code {
-    private string message = "Klikni na tlačítko pro načtení kurzů...";
-
-    private async Task LoadRates()
+    protected override void OnInitialized()
     {
-        try
-        {
-            var settings = await SettingsService.GetSettingsAsync();
-            var result = await AnalyticsService.PerformFullAnalysisAsync(
-                settings.BaseCurrency, settings.SelectedCurrencies);
-
-            message = $"✅ Nejsilnější: {result.Strongest.Currency} | Nejslabší: {result.Weakest.Currency} | Průměr: {result.AverageRate}";
-        }
-        catch (Exception ex)
-        {
-            message = $"❌ Chyba: {ex.Message}";
-        }
-    }
-
-    private void Logout()
-    {
-        AuthService.Logout();
-        Navigation.NavigateTo("/login", true);
+        Navigation.NavigateTo("/dashboard");
     }
 }
