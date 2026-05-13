@@ -16,7 +16,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=CurrencyAnalyzer.db"));
 
 builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
-builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+//builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 
 // DŮLEŽITÉ: Pouze jeden z těchto dvou!
 builder.Services.AddScoped<IExchangeRateService, MockExchangeRateService>();     // ← Mock (doporučeno teď)
