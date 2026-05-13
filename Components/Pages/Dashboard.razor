@@ -8,11 +8,21 @@
 @inject IAnalyticsService AnalyticsService
 @inject IUserSettingsService UserSettingsService
 @inject NavigationManager Navigation
+@inject IAuthService AuthService
 
 
 <PageTitle>Dashboard</PageTitle>
 
-<h1 class="mb-4">Currency Dashboard</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h1 class="mb-0">Currency Dashboard</h1>
+
+    <button class="btn btn-outline-danger"
+            @onclick="Logout">
+        Logout
+    </button>
+
+</div>
 
 @if (isLoading)
 {
@@ -136,6 +146,11 @@ else if (analysisResult != null)
 
     protected override async Task OnInitializedAsync()
     {
+        @if (!AuthService.IsLoggedIn())
+        {
+            Navigation.NavigateTo("/login");
+        }
+
         await LoadDashboardAsync();
     }
 
@@ -174,5 +189,12 @@ else if (analysisResult != null)
         await LoadDashboardAsync();
 
         StateHasChanged();
+    }
+
+    private void Logout()
+    {
+        AuthService.Logout();
+
+        Navigation.NavigateTo("/login", forceLoad: true);
     }
 }

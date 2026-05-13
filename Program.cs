@@ -5,6 +5,7 @@ using CurrencyAnalyzer.Core.Services;
 using Microsoft.EntityFrameworkCore;
 
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -17,6 +18,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddScoped<ILogService, LogService>();
+builder.Services.AddSingleton<IAuthService, AuthService>();
 
 // DŮLEŽITÉ: Pouze jeden z těchto dvou!
 builder.Services.AddScoped<IExchangeRateService, MockExchangeRateService>();     // ← Mock (doporučeno teď)

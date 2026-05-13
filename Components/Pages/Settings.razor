@@ -6,10 +6,20 @@
 
 @inject IUserSettingsService UserSettingsService
 @inject NavigationManager Navigation
+@inject IAuthService AuthService
 
 <PageTitle>Nastavení</PageTitle>
 
-<h1>Nastavení</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h1 class="mb-0">Nastavení</h1>
+
+    <button class="btn btn-outline-danger"
+            @onclick="Logout">
+        Logout
+    </button>
+
+</div>
 
 @if (settings == null)
 {
@@ -20,62 +30,45 @@ else
     <div class="card p-4">
 
         <div class="mb-4">
-            <label class="form-label fw-bold">
-                Základní měna
-            </label>
+            <label class="form-label fw-bold">Základní měna</label>
 
             <select class="form-select"
-                    @bind="settings.BaseCurrency">
+                    value="@settings.BaseCurrency"
+                    @onchange="OnBaseCurrencyChanged">
 
                 @foreach (var currency in AvailableCurrencies)
                 {
-                    <option value="@currency">
-                        @currency
-                    </option>
+                    <option value="@currency">@currency</option>
                 }
-
             </select>
         </div>
 
         <div class="mb-4">
-
-            <label class="form-label fw-bold">
-                Sledované měny
-            </label>
+            <label class="form-label fw-bold">Sledované měny</label>
 
             @foreach (var currency in AvailableCurrencies)
             {
                 var isBase = currency == settings.BaseCurrency;
 
                 <div class="form-check mb-2">
-
                     <input class="form-check-input"
                            type="checkbox"
                            checked="@IsSelected(currency)"
                            disabled="@isBase"
-                           @onchange="(e) => ToggleCurrency(currency, (bool)e.Value!)" />
+                           @onchange="async e => await ToggleCurrency(currency, (bool)e.Value!)" />
 
-                    <label class="form-check-label">
-                        @currency
-                    </label>
-
+                    <label class="form-check-label">@currency</label>
                 </div>
             }
-
         </div>
 
         <div class="d-flex gap-3">
-
-            <button class="btn btn-primary"
-                    @onclick="SaveSettings">
-                💾 Uložit
-            </button>
+            
 
             <button class="btn btn-secondary"
                     @onclick="ResetSettings">
                 🔄 Reset
             </button>
-
         </div>
 
         @if (!string.IsNullOrWhiteSpace(StatusMessage))
@@ -84,69 +77,56 @@ else
                 @StatusMessage
             </div>
         }
-
     </div>
 }
 
 @code {
 
     private UserSettings? settings;
-
     private string StatusMessage = "";
 
     private readonly List<string> AvailableCurrencies =
     [
-        "EUR",
-        "USD",
-        "CZK",
-        "GBP",
-        "JPY",
-        "CHF",
-        "PLN"
+        "EUR","USD","CZK","GBP","JPY","CHF","PLN"
     ];
 
     protected override async Task OnInitializedAsync()
     {
+        if (!AuthService.IsLoggedIn())
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
         settings = await UserSettingsService.GetSettingsAsync();
     }
 
     private bool IsSelected(string currency)
+        => settings?.SelectedCurrencies.Contains(currency) ?? false;
+
+    private async Task ToggleCurrency(string currency, bool isChecked)
     {
         if (settings == null)
-            return false;
-
-        return settings.SelectedCurrencies.Contains(currency);
-    }
-
-    private void ToggleCurrency(string currency, bool isChecked)
-    {
-        if (settings == null)
-            return;
-
-        if (currency == settings.BaseCurrency)
             return;
 
         if (isChecked)
-        {
-            if (!settings.SelectedCurrencies.Contains(currency))
-                settings.SelectedCurrencies.Add(currency);
-        }
+            settings = await UserSettingsService.AddCurrencyAsync(currency);
         else
-        {
-            settings.SelectedCurrencies.Remove(currency);
-        }
+            settings = await UserSettingsService.RemoveCurrencyAsync(currency);
+
+        StatusMessage = "✅ Nastavení uloženo";
     }
 
-    private async Task SaveSettings()
+    private async Task OnBaseCurrencyChanged(ChangeEventArgs e)
     {
         if (settings == null)
             return;
 
-        await UserSettingsService.SaveSettingsAsync(settings);
+        var currency = e.Value?.ToString() ?? "EUR";
 
-        StatusMessage = "✅ Nastavení uloženo";
+        settings = await UserSettingsService.SetBaseCurrencyAsync(currency);
 
-        Navigation.NavigateTo("/dashboard", true);
+        StatusMessage = "✅ Základní měna změněna";
     }
 
     private async Task ResetSettings()
@@ -155,8 +135,13 @@ else
 
         settings = await UserSettingsService.GetSettingsAsync();
 
-        StatusMessage = "🔄 Nastavení resetováno";
-
-        StateHasChanged();
+        StatusMessage = "🔄 Resetováno";
     }
+
+    private void Logout()
+{
+    AuthService.Logout();
+
+    Navigation.NavigateTo("/login", forceLoad: true);
+}
 }
