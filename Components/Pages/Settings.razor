@@ -6,10 +6,20 @@
 
 @inject IUserSettingsService UserSettingsService
 @inject NavigationManager Navigation
+@inject IAuthService AuthService
 
 <PageTitle>Nastavení</PageTitle>
 
-<h1>Nastavení</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h1 class="mb-0">Nastavení</h1>
+
+    <button class="btn btn-outline-danger"
+            @onclick="Logout">
+        Logout
+    </button>
+
+</div>
 
 @if (settings == null)
 {
@@ -53,11 +63,7 @@ else
         </div>
 
         <div class="d-flex gap-3">
-            <button class="btn btn-primary"
-                    disabled="@(!isDirty)"
-                    @onclick="SaveSettings">
-                💾 Uložit
-            </button>
+            
 
             <button class="btn btn-secondary"
                     @onclick="ResetSettings">
@@ -78,7 +84,6 @@ else
 
     private UserSettings? settings;
     private string StatusMessage = "";
-    private bool isDirty = false;
 
     private readonly List<string> AvailableCurrencies =
     [
@@ -87,6 +92,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        if (!AuthService.IsLoggedIn())
+        {
+            Navigation.NavigateTo("/login");
+            return;
+        }
+
         settings = await UserSettingsService.GetSettingsAsync();
     }
 
@@ -102,22 +113,20 @@ else
             settings = await UserSettingsService.AddCurrencyAsync(currency);
         else
             settings = await UserSettingsService.RemoveCurrencyAsync(currency);
+
+        StatusMessage = "✅ Nastavení uloženo";
     }
 
-    private void OnBaseCurrencyChanged(ChangeEventArgs e)
+    private async Task OnBaseCurrencyChanged(ChangeEventArgs e)
     {
-        settings.BaseCurrency = e.Value?.ToString() ?? "EUR";
-        isDirty = true;
-    }
+        if (settings == null)
+            return;
 
-    private async Task SaveSettings()
-    {
-        if (settings == null) return;
+        var currency = e.Value?.ToString() ?? "EUR";
 
-        await UserSettingsService.SaveSettingsAsync(settings);
+        settings = await UserSettingsService.SetBaseCurrencyAsync(currency);
 
-        isDirty = false;
-        StatusMessage = "✅ Uloženo";
+        StatusMessage = "✅ Základní měna změněna";
     }
 
     private async Task ResetSettings()
@@ -126,7 +135,13 @@ else
 
         settings = await UserSettingsService.GetSettingsAsync();
 
-        isDirty = false;
         StatusMessage = "🔄 Resetováno";
     }
+
+    private void Logout()
+{
+    AuthService.Logout();
+
+    Navigation.NavigateTo("/login", forceLoad: true);
+}
 }
