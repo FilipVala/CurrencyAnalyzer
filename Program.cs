@@ -17,6 +17,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddScoped<ILogService, LogService>();
 
 // DŮLEŽITÉ: Pouze jeden z těchto dvou!
 builder.Services.AddScoped<IExchangeRateService, MockExchangeRateService>();     // ← Mock (doporučeno teď)
