@@ -8,63 +8,118 @@
 
 <PageTitle>Dashboard</PageTitle>
 
-<h3>Currency Dashboard</h3>
+<h1 class="mb-4">Currency Dashboard</h1>
 
 @if (isLoading)
 {
-    <p>Loading analysis...</p>
+    <div class="alert alert-info">
+        Loading analysis...
+    </div>
 }
 else if (!string.IsNullOrEmpty(errorMessage))
 {
-    <p style="color:red">@errorMessage</p>
+    <div class="alert alert-danger">
+        @errorMessage
+    </div>
 }
 else if (analysisResult != null)
 {
-    <div class="mb-4">
-        <p><strong>Base Currency:</strong> @analysisResult.BaseCurrency</p>
-        <p>
-            <strong>Strongest Currency:</strong>
-            @analysisResult.Strongest.Currency
-            (@analysisResult.Strongest.Rate)
-        </p>
+    <div class="row mb-4">
 
-        <p>
-            <strong>Weakest Currency:</strong>
-            @analysisResult.Weakest.Currency
-            (@analysisResult.Weakest.Rate)
-        </p>
+        <div class="col-md-4">
+            <div class="card text-bg-success mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Strongest Currency</h5>
 
-        <p>
-            <strong>Average Rate:</strong>
-            @analysisResult.AverageRate
-        </p>
+                    <p class="card-text fs-4">
+                        @analysisResult.Strongest.Currency
+                    </p>
 
-        <p>
-            <strong>Calculated At:</strong>
-            @analysisResult.CalculatedAt
-        </p>
+                    <p>
+                        Rate: @analysisResult.Strongest.Rate
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-bg-danger mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Weakest Currency</h5>
+
+                    <p class="card-text fs-4">
+                        @analysisResult.Weakest.Currency
+                    </p>
+
+                    <p>
+                        Rate: @analysisResult.Weakest.Rate
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-bg-primary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Average Rate</h5>
+
+                    <p class="card-text fs-4">
+                        @analysisResult.AverageRate
+                    </p>
+
+                    <p>
+                        Base: @analysisResult.BaseCurrency
+                    </p>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <h4>Rates</h4>
+    <div class="card">
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Currency</th>
-                <th>Rate</th>
-            </tr>
-        </thead>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Exchange Rates</h4>
 
-        <tbody>
-            @foreach (var rate in analysisResult.Rates)
-            {
-                <tr>
-                    <td>@rate.Key</td>
-                    <td>@rate.Value</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+            <button class="btn btn-outline-light btn-sm"
+                    @onclick="ReloadDashboard">
+                Refresh
+            </button>
+        </div>
+
+        <div class="card-body">
+
+            <p>
+                <strong>Calculated:</strong>
+                @analysisResult.CalculatedAt.ToLocalTime()
+            </p>
+
+            <table class="table table-striped table-hover">
+
+                <thead class="table-dark">
+                    <tr>
+                        <th>Currency</th>
+                        <th>Rate</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @foreach (var rate in analysisResult.Rates)
+                    {
+                        <tr>
+                            <td>@rate.Key</td>
+                            <td>@rate.Value</td>
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
 }
 
 @code {
@@ -77,8 +132,15 @@ else if (analysisResult != null)
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadDashboardAsync();
+    }
+
+    private async Task LoadDashboardAsync()
+    {
         try
         {
+            isLoading = true;
+
             var settings = await UserSettingsService.GetSettingsAsync();
 
             analysisResult = await AnalyticsService.PerformFullAnalysisAsync(
@@ -93,5 +155,11 @@ else if (analysisResult != null)
         {
             isLoading = false;
         }
+    }
+
+    private async Task ReloadDashboard()
+    {
+        Console.WriteLine("Dashboard refreshed");
+        await LoadDashboardAsync();
     }
 }
