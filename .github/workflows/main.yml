@@ -1,0 +1,35 @@
+name .NET CI
+
+on
+  push
+    branches
+      - main
+      - develop
+      - featureintegrating-api
+
+  pull_request
+    branches
+      - main
+      - develop
+
+jobs
+  build
+    runs-on ubuntu-latest
+
+    steps
+    - name Checkout repository
+      uses actionscheckout@v4
+
+    - name Setup .NET
+      uses actionssetup-dotnet@v4
+      with
+        dotnet-version 8.0.x
+
+    - name Restore dependencies
+      run dotnet restore CurrencyAnalyzer.sln
+
+    - name Build
+      run dotnet build CurrencyAnalyzer.sln --configuration Release --no-restore
+
+    - name Test
+      run dotnet test CurrencyAnalyzer.TestsCurrencyAnalyzer.Tests.csproj --no-build
