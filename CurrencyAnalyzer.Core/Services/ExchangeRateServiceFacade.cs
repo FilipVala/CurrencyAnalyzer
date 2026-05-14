@@ -1,32 +1,45 @@
-﻿using CurrencyAnalyzer.Core.Interfaces;
+﻿using CurrencyAnalyzer.Core.DTOs;
+using CurrencyAnalyzer.Core.Interfaces;
 
 namespace CurrencyAnalyzer.Core.Services;
 
 public class ExchangeRateServiceFacade
 {
-    private readonly IExchangeRateService _service;
+    private readonly IExchangeRateService _exchangeRateService;
 
-    public ExchangeRateServiceFacade(IExchangeRateService service)
+    public ExchangeRateServiceFacade(
+        IExchangeRateService exchangeRateService)
     {
-        _service = service;
+        _exchangeRateService = exchangeRateService;
     }
 
-    public async Task<Dictionary<string, decimal>> GetCurrentRatesForAnalysisAsync(
-        string baseCurrency,
-        IEnumerable<string> symbols)
+    public async Task<Dictionary<string, decimal>>
+        GetCurrentRatesForAnalysisAsync(
+            string baseCurrency,
+            IEnumerable<string> symbols)
     {
-        var result = await _service.GetLatestRatesAsync(baseCurrency, symbols);
-        return result.Rates;
+        var response = await _exchangeRateService
+            .GetLatestRatesAsync(baseCurrency, symbols);
+
+        return response?.Rates
+            ?? new Dictionary<string, decimal>();
     }
 
-    public async Task<Dictionary<string, decimal>> GetHistoricalRatesAsync(
-        string baseCurrency,
-        IEnumerable<string> symbols,
-        DateTime start,
-        DateTime end)
+    public async Task<Dictionary<string, decimal>>
+        GetHistoricalRatesAsync(
+            string baseCurrency,
+            IEnumerable<string> symbols,
+            DateTime start,
+            DateTime end)
     {
-        // fallback (STIN styl – často se historie neřeší)
-        var result = await _service.GetLatestRatesAsync(baseCurrency, symbols);
-        return result.Rates;
+        var response = await _exchangeRateService
+            .GetHistoricalRatesAsync(
+                baseCurrency,
+                symbols,
+                start,
+                end);
+
+        return response?.Rates
+            ?? new Dictionary<string, decimal>();
     }
 }

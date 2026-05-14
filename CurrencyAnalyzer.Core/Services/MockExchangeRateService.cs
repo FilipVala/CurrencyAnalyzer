@@ -1,5 +1,6 @@
 ﻿using CurrencyAnalyzer.Core.DTOs;
 using CurrencyAnalyzer.Core.Interfaces;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CurrencyAnalyzer.Core.Services;
 
@@ -24,7 +25,7 @@ public class MockExchangeRateService : IExchangeRateService
         {
             Success = true,
             Base = baseCurrency,
-            Date = DateTime.UtcNow,
+            Date = DateTime.UtcNow.ToString("yyyy-MM-dd"),
             Rates = rates
         });
     }
