@@ -28,8 +28,14 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore CurrencyAnalyzer.sln
 
-      - name: Build solution
+      - name: Build
         run: dotnet build CurrencyAnalyzer.sln --configuration Release --no-restore
 
-      - name: Run tests
-        run: dotnet test CurrencyAnalyzer.Tests/CurrencyAnalyzer.Tests.csproj --configuration Release --no-build --verbosity normal
+      - name: Run tests with coverage
+        run: dotnet test CurrencyAnalyzer.Tests/CurrencyAnalyzer.Tests.csproj --collect:"XPlat Code Coverage"
+
+      - name: Upload coverage results
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: CurrencyAnalyzer.Tests/TestResults
