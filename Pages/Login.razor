@@ -1,62 +1,70 @@
 ﻿@page "/login"
+
+
+
 @using CurrencyAnalyzer.Core.Interfaces
 @using CurrencyAnalyzer.Core.Models
 @using Microsoft.AspNetCore.Components.Forms
 
+
 @inject IAuthService AuthService
 @inject NavigationManager NavigationManager
 
+
 <PageTitle>Přihlášení - Měnový Analyzátor</PageTitle>
 
-<div style="max-width: 420px; margin: 80px auto; padding: 30px; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-    <h3>Přihlášení</h3>
-    <p><small><strong>admin</strong> / <strong>stin2026</strong></small></p>
+<div style="max-width: 420px; margin: 80px auto; padding: 30px; border: 1px solid #ddd; border-radius: 10px;">
 
-    <EditForm Model="loginModel" OnValidSubmit="HandleLoginAsync" FormName="loginForm">
-        <DataAnnotationsValidator />
+    <h3>Přihlášení</h3>
 
-        <div class="mb-3">
-            <label class="form-label">Uživatelské jméno</label>
-            <InputText class="form-control"
-                       @bind-Value="loginModel.Username"
-                       @bind-Value:event="oninput" />
-        </div>
+    <EditForm Model="@loginModel"
+              OnValidSubmit="HandleLoginAsync"
+              FormName="LoginForm">
 
-        <div class="mb-3">
-            <label class="form-label">Heslo</label>
-            <InputText type="password"
-                       class="form-control"
-                       @bind-Value="loginModel.Password"
-                       @bind-Value:event="oninput" />
-        </div>
+        <DataAnnotationsValidator />
 
-        <button type="submit" class="btn btn-primary w-100">Přihlásit se</button>
-    </EditForm>
+        <div class="mb-3">
+            <label>Uživatelské jméno</label>
+            <InputText @bind-Value="loginModel.Username"
+                       class="form-control" />
+        </div>
 
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-danger mt-3">@errorMessage</div>
-    }
+        <div class="mb-3">
+            <label>Heslo</label>
+            <InputText type="password"
+                       @bind-Value="loginModel.Password"
+                       class="form-control" />
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">
+            Přihlásit se
+        </button>
+
+    </EditForm>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-3">@errorMessage</div>
+    }
+
 </div>
 
 @code {
-    private LoginModel loginModel = new();
-    private string? errorMessage = null;
+    private LoginModel loginModel = new();
+    private string? errorMessage;
 
-    private async Task HandleLoginAsync()
-    {
-        errorMessage = null;
-        var success = await AuthService.LoginAsync(loginModel.Username, loginModel.Password);
+    private async Task HandleLoginAsync()
+    {
+        Console.WriteLine("login SERVICE CALLED");
+        var success = await AuthService.LoginAsync(loginModel.Username, loginModel.Password);
 
-        if (success)
-        {
-            NavigationManager.NavigateTo("/", forceLoad: true);
-        }
-        else
-        {
-            Console.WriteLine($"LOGIN: {loginModel.Username} / {loginModel.Password}");
-            errorMessage = "Nesprávné přihlašovací údaje!";
-        }
-
-    }
+        if (success)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            errorMessage = "Nesprávné přihlašovací údaje!";
+        }
+    }
 }
