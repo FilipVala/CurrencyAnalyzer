@@ -4,18 +4,15 @@ using CurrencyAnalyzer.Core.Interfaces;
 using CurrencyAnalyzer.Core.Services;
 using Microsoft.EntityFrameworkCore;
 
-
-
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+  .AddInteractiveServerComponents();
 
 // === Služby ===
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=CurrencyAnalyzer.db"));
+  options.UseSqlite("Data Source=CurrencyAnalyzer.db"));
 
 builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
@@ -23,10 +20,11 @@ builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddSingleton<IAuthService, AuthService>();
 builder.Services.AddScoped<MockExchangeRateService>();
 builder.Services.AddScoped<ExchangeRateService>();
+//builder.Services.AddScoped<IAuthService, AuthService>();
 
 // DŮLEŽITÉ: Pouze jeden z těchto dvou!
-//builder.Services.AddScoped<IExchangeRateService, MockExchangeRateService>();     // ← Mock (doporučeno teď)
-builder.Services.AddScoped<IExchangeRateService, ExchangeRateService>();     // ← reálné API (až později)
+//builder.Services.AddScoped<IExchangeRateService, MockExchangeRateService>();     // ← Mock (doporučeno teď)
+builder.Services.AddScoped<IExchangeRateService, ExchangeRateService>();     // ← reálné API (až později)
 
 // HTTP client pro případ, že bys chtěl reálnou službu
 builder.Services.AddHttpClient<ExchangeRateService>(client =>
@@ -56,6 +54,6 @@ app.UseStaticFiles();
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
+  .AddInteractiveServerRenderMode();
 
 app.Run();
