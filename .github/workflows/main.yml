@@ -31,5 +31,5 @@ jobs
     - name Build
       run dotnet build CurrencyAnalyzer.sln --configuration Release --no-restore
 
-    - name Test
-      run dotnet test CurrencyAnalyzer.TestsCurrencyAnalyzer.Tests.csproj --no-build
+    - name: Test
+  run: dotnet test CurrencyAnalyzer.sln --no-build --verbosity normal
