@@ -13,7 +13,7 @@ on:
       - develop
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -28,8 +28,8 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore CurrencyAnalyzer.sln
 
-      - name: Build
+      - name: Build solution
         run: dotnet build CurrencyAnalyzer.sln --configuration Release --no-restore
 
-      - name: Test
-        run: dotnet test CurrencyAnalyzer.sln --configuration Release --no-build --verbosity normal
+      - name: Run tests
+        run: dotnet test CurrencyAnalyzer.Tests/CurrencyAnalyzer.Tests.csproj --configuration Release --no-build --verbosity normal
