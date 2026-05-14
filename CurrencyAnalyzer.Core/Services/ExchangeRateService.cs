@@ -1,32 +1,41 @@
 ﻿using System.Text.Json;
 using CurrencyAnalyzer.Core.DTOs;
 using CurrencyAnalyzer.Core.Interfaces;
-using Microsoft.Extensions.Configuration;
 
 namespace CurrencyAnalyzer.Core.Services;
 
 public class ExchangeRateService : IExchangeRateService
 {
     private readonly HttpClient _httpClient;
-    private readonly IConfiguration _configuration;
 
-    public ExchangeRateService(HttpClient httpClient, IConfiguration configuration)
+    public ExchangeRateService(
+        HttpClient httpClient)
     {
         _httpClient = httpClient;
-        _configuration = configuration;
     }
 
     public async Task<ExchangeRateResponse> GetLatestRatesAsync(
         string baseCurrency,
         IEnumerable<string> symbols)
     {
-        var symbolsString = string.Join(",", symbols);
+        var filteredSymbols = symbols
+            .Where(s => s != baseCurrency);
 
-        // exchangerate.host funguje bez access_key
-        var url = $"https://api.exchangerate.host/v1/latest?base={baseCurrency}&symbols={symbolsString}";
+        var symbolsString = string.Join(",", filteredSymbols);
+
+        var url =
+            $"https://api.frankfurter.app/latest?from={baseCurrency}&to={symbolsString}";
 
         var response = await _httpClient.GetAsync(url);
-        response.EnsureSuccessStatusCode();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return new ExchangeRateResponse
+            {
+                Success = false,
+                Rates = new Dictionary<string, decimal>()
+            };
+        }
 
         var json = await response.Content.ReadAsStringAsync();
 
@@ -38,7 +47,15 @@ public class ExchangeRateService : IExchangeRateService
             });
 
         if (result == null)
-            throw new Exception("Failed to deserialize API response");
+        {
+            return new ExchangeRateResponse
+            {
+                Success = false,
+                Rates = new Dictionary<string, decimal>()
+            };
+        }
+
+        result.Success = true;
 
         return result;
     }
@@ -49,14 +66,47 @@ public class ExchangeRateService : IExchangeRateService
         DateTime startDate,
         DateTime endDate)
     {
-        return await GetLatestRatesAsync(baseCurrency, symbols);
-    }
+        var filteredSymbols = symbols
+            .Where(s => s != baseCurrency);
 
-    public async Task<Dictionary<string, decimal>> GetCurrentRatesForAnalysisAsync(
-        string baseCurrency,
-        IEnumerable<string> selectedCurrencies)
-    {
-        var result = await GetLatestRatesAsync(baseCurrency, selectedCurrencies);
-        return result.Rates;
+        var symbolsString = string.Join(",", filteredSymbols);
+
+        var formattedDate = startDate.ToString("yyyy-MM-dd");
+
+        var url =
+            $"https://api.frankfurter.app/{formattedDate}?from={baseCurrency}&to={symbolsString}";
+
+        var response = await _httpClient.GetAsync(url);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return new ExchangeRateResponse
+            {
+                Success = false,
+                Rates = new Dictionary<string, decimal>()
+            };
+        }
+
+        var json = await response.Content.ReadAsStringAsync();
+
+        var result = JsonSerializer.Deserialize<ExchangeRateResponse>(
+            json,
+            new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+        if (result == null)
+        {
+            return new ExchangeRateResponse
+            {
+                Success = false,
+                Rates = new Dictionary<string, decimal>()
+            };
+        }
+
+        result.Success = true;
+
+        return result;
     }
 }

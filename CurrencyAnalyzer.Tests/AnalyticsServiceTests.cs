@@ -1,4 +1,5 @@
-﻿using CurrencyAnalyzer.Core.Interfaces;
+﻿using CurrencyAnalyzer.Core.DTOs;
+using CurrencyAnalyzer.Core.Interfaces;
 using CurrencyAnalyzer.Core.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -87,8 +88,6 @@ public class AnalyticsServiceTests
         Assert.Equal("N/A", result.Currency);
         Assert.Equal(0, result.Rate);
     }
-<<<<<<< HEAD
-=======
 
     [Fact]
     public void GetWeakestCurrency_WithNullDictionary_ReturnsNA()
@@ -106,13 +105,14 @@ public class AnalyticsServiceTests
 
         Assert.Equal(0, result);
     }
+
     [Fact]
     public void GetStrongestCurrency_WithSingleCurrency_ReturnsCorrectResult()
     {
         var rates = new Dictionary<string, decimal>
-    {
-        { "CZK", 25.4m }
-    };
+        {
+            { "CZK", 25.4m }
+        };
 
         var result = _analyticsService.GetStrongestCurrency(rates);
 
@@ -124,11 +124,11 @@ public class AnalyticsServiceTests
     {
         // Arrange
         var rates = new Dictionary<string, decimal>
-    {
-        { "USD", 1.1m },
-        { "CZK", 24.5m },
-        { "GBP", 0.8m }
-    };
+        {
+            { "USD", 1.1m },
+            { "CZK", 24.5m },
+            { "GBP", 0.8m }
+        };
 
         var response = new ExchangeRateResponse
         {
@@ -146,12 +146,9 @@ public class AnalyticsServiceTests
 
         var loggerMock = new Mock<ILogger<AnalyticsService>>();
 
-        var logServiceMock = new Mock<ILogService>();
-
         var service = new AnalyticsService(
             exchangeRateServiceMock.Object,
-            loggerMock.Object,
-            logServiceMock.Object);
+            loggerMock.Object);
 
         // Act
         var result = await service.PerformFullAnalysisAsync(
@@ -188,12 +185,9 @@ public class AnalyticsServiceTests
 
         var loggerMock = new Mock<ILogger<AnalyticsService>>();
 
-        var logServiceMock = new Mock<ILogService>();
-
         var service = new AnalyticsService(
             exchangeRateServiceMock.Object,
-            loggerMock.Object,
-            logServiceMock.Object);
+            loggerMock.Object);
 
         // Act
         var result = await service.PerformFullAnalysisAsync(
@@ -222,12 +216,9 @@ public class AnalyticsServiceTests
 
         var loggerMock = new Mock<ILogger<AnalyticsService>>();
 
-        var logServiceMock = new Mock<ILogService>();
-
         var service = new AnalyticsService(
             exchangeRateServiceMock.Object,
-            loggerMock.Object,
-            logServiceMock.Object);
+            loggerMock.Object);
 
         // Act
         var result = await service.PerformFullAnalysisAsync(
@@ -265,12 +256,9 @@ public class AnalyticsServiceTests
 
         var loggerMock = new Mock<ILogger<AnalyticsService>>();
 
-        var logServiceMock = new Mock<ILogService>();
-
         var service = new AnalyticsService(
             exchangeRateServiceMock.Object,
-            loggerMock.Object,
-            logServiceMock.Object);
+            loggerMock.Object);
 
         var result = await service.PerformFullAnalysisAsync(
             "EUR",
@@ -287,5 +275,4 @@ public class AnalyticsServiceTests
 
         Assert.Equal("N/A", result.Currency);
     }
->>>>>>> a11e40f (Add unit tests and improve code coverage)
 }
