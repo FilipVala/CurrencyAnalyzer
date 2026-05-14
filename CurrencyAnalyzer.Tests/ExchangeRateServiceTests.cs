@@ -1,11 +1,16 @@
 ﻿using System.Net;
-using System.Net.Http;
 using System.Text;
+<<<<<<< HEAD
 using System.Threading;
 using System.Threading.Tasks;
 using CurrencyAnalyzer.Core.Services;
 using Microsoft.Extensions.Configuration;
 using Xunit;
+=======
+using CurrencyAnalyzer.Core.Clients;
+using CurrencyAnalyzer.Core.DTOs;
+using CurrencyAnalyzer.Core.Services;
+>>>>>>> a11e40f (Add unit tests and improve code coverage)
 
 namespace CurrencyAnalyzer.Tests;
 
@@ -28,7 +33,7 @@ public class ExchangeRateServiceTests
     }
 
     [Fact]
-    public async Task GetLatestRatesAsync_ReturnsData_WhenApiReturnsValidResponse()
+    public async Task GetCurrentRatesForAnalysisAsync_ReturnsRates()
     {
         // arrange
         var json = """
@@ -37,7 +42,7 @@ public class ExchangeRateServiceTests
             "base": "EUR",
             "rates": {
                 "USD": 1.1,
-                "CZK": 25.5
+                "CZK": 25.0
             }
         }
         """;
@@ -45,6 +50,7 @@ public class ExchangeRateServiceTests
         var service = CreateService(json);
 
         // act
+<<<<<<< HEAD
         var result = await service.GetLatestRatesAsync("EUR", new[] { "USD", "CZK" });
 
         // assert
@@ -56,25 +62,63 @@ public class ExchangeRateServiceTests
 
     [Fact]
     public async Task GetLatestRatesAsync_ReturnsNullOrEmpty_WhenApiFails()
+=======
+        var result = await service.GetCurrentRatesForAnalysisAsync(
+            "EUR",
+            new[] { "USD", "CZK" });
+
+        // assert
+        Assert.NotNull(result);
+
+        Assert.Equal(2, result.Count);
+
+        Assert.Equal(1.1m, result["USD"]);
+
+        Assert.Equal(25.0m, result["CZK"]);
+    }
+
+    [Fact]
+    public async Task GetHistoricalRatesAsync_ReturnsData()
+>>>>>>> a11e40f (Add unit tests and improve code coverage)
     {
-        // arrange
         var json = """
+<<<<<<< HEAD
         {
             "success": false,
             "error": {
                 "code": 101,
                 "type": "missing_access_key"
             }
+=======
+    {
+        "amount": 1.0,
+        "base": "EUR",
+        "date": "2026-05-10",
+        "rates": {
+            "USD": 1.1
+>>>>>>> a11e40f (Add unit tests and improve code coverage)
         }
-        """;
+    }
+    """;
 
         var service = CreateService(json);
 
+<<<<<<< HEAD
         // act
         var result = await service.GetLatestRatesAsync("EUR", new[] { "USD" });
+=======
+        var result = await service.GetHistoricalRatesAsync(
+            "EUR",
+            new[] { "USD" },
+            DateTime.UtcNow.AddDays(-1),
+            DateTime.UtcNow);
+>>>>>>> a11e40f (Add unit tests and improve code coverage)
 
-        // assert
-        Assert.False(result.Success);
+        Assert.NotNull(result);
+
+        Assert.Single(result.Rates);
+
+        Assert.Equal(1.1m, result.Rates["USD"]);
     }
 
     private class FakeHttpMessageHandler : HttpMessageHandler

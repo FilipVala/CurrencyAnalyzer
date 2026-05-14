@@ -1,90 +1,134 @@
 ﻿using CurrencyAnalyzer.Core.Data;
+using CurrencyAnalyzer.Core.Interfaces;
 using CurrencyAnalyzer.Core.Models;
 using CurrencyAnalyzer.Core.Services;
 using Microsoft.EntityFrameworkCore;
 using Moq;
-using CurrencyAnalyzer.Core.Interfaces;
 using Xunit;
 
 namespace CurrencyAnalyzer.Tests;
 
 public class UserSettingsServiceTests
 {
-    private static AppDbContext CreateDbContext()
+    private AppDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
         return new AppDbContext(options);
     }
 
     [Fact]
-    public async Task GetSettings_ReturnsDefault_WhenDatabaseEmpty()
+    public async Task AddCurrencyAsync_AddsCurrency()
     {
-        var dbContext = CreateDbContext();
-        var logMock = new Mock<ILogService>();
-        var service = new UserSettingsService(dbContext, logMock.Object);
+        var db = CreateDbContext();
 
-        var result = await service.GetSettingsAsync();
+        db.UserSettings.Add(new UserSettings
+        {
+            BaseCurrency = "EUR",
+            SelectedCurrencies = new List<string> { "USD" }
+        });
 
-        Assert.NotNull(result);
-        Assert.Equal("EUR", result.BaseCurrency);
-        Assert.Contains("USD", result.SelectedCurrencies);
+        await db.SaveChangesAsync();
+
+        var logService = new Mock<ILogService>();
+
+        var service = new UserSettingsService(
+            db,
+            logService.Object);
+
+        await service.AddCurrencyAsync("CZK");
+
+        var settings = await db.UserSettings.FirstAsync();
+
+        Assert.Contains("CZK", settings.SelectedCurrencies);
     }
 
     [Fact]
-    public async Task UpdateSettings_PersistsChanges()
+    public async Task RemoveCurrencyAsync_RemovesCurrency()
     {
-        var dbContext = CreateDbContext();
-        var logMock = new Mock<ILogService>();
-        var service = new UserSettingsService(dbContext, logMock.Object);
+        var db = CreateDbContext();
 
-        var settings = await service.GetSettingsAsync();
+        db.UserSettings.Add(new UserSettings
+        {
+            BaseCurrency = "EUR",
+            SelectedCurrencies = new List<string>
+            {
+                "USD",
+                "CZK"
+            }
+        });
 
-        settings.BaseCurrency = "USD";
-        settings.SelectedCurrencies = new List<string> { "USD", "EUR" };
+        await db.SaveChangesAsync();
 
-        await service.SaveSettingsAsync(settings);
+        var logService = new Mock<ILogService>();
 
-        var updated = await service.GetSettingsAsync();
+        var service = new UserSettingsService(
+            db,
+            logService.Object);
 
-        Assert.Equal("USD", updated.BaseCurrency);
-        Assert.Contains("EUR", updated.SelectedCurrencies);
+        await service.RemoveCurrencyAsync("CZK");
+
+        var settings = await db.UserSettings.FirstAsync();
+
+        Assert.DoesNotContain("CZK", settings.SelectedCurrencies);
     }
 
     [Fact]
-    public async Task Reset_RemovesAndRecreatesDefaults()
+    public async Task SetBaseCurrencyAsync_ChangesBaseCurrency()
     {
-        var dbContext = CreateDbContext();
-        var logMock = new Mock<ILogService>();
-        var service = new UserSettingsService(dbContext, logMock.Object);
+        var db = CreateDbContext();
 
-        var settings = await service.GetSettingsAsync();
-        settings.BaseCurrency = "USD";
-        await service.SaveSettingsAsync(settings);
+        db.UserSettings.Add(new UserSettings
+        {
+            BaseCurrency = "EUR",
+            SelectedCurrencies = new List<string> { "USD" }
+        });
+
+        await db.SaveChangesAsync();
+
+        var logService = new Mock<ILogService>();
+
+        var service = new UserSettingsService(
+            db,
+            logService.Object);
+
+        await service.SetBaseCurrencyAsync("CZK");
+
+        var settings = await db.UserSettings.FirstAsync();
+
+        Assert.Equal("CZK", settings.BaseCurrency);
+    }
+
+    [Fact]
+    public async Task ResetToDefaultAsync_ResetsSettings()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        using var context = new AppDbContext(options);
+
+        context.UserSettings.Add(new UserSettings
+        {
+            BaseCurrency = "USD",
+            SelectedCurrencies = new List<string> { "EUR", "CZK" }
+        });
+
+        await context.SaveChangesAsync();
+
+        var logMock = new Mock<ILogService>();
+
+        var service = new UserSettingsService(context, logMock.Object);
 
         await service.ResetToDefaultAsync();
 
-        var reset = await service.GetSettingsAsync();
+        var settings = await context.UserSettings.FirstAsync();
 
-        Assert.Equal("EUR", reset.BaseCurrency);
-        Assert.Contains("GBP", reset.SelectedCurrencies);
+        Assert.Equal("EUR", settings.BaseCurrency);
+        Assert.Contains("USD", settings.SelectedCurrencies);
     }
 
-    [Fact]
-    public async Task Settings_PersistBetweenCalls()
-    {
-        var dbContext = CreateDbContext();
-        var logMock = new Mock<ILogService>();
-        var service = new UserSettingsService(dbContext, logMock.Object);
 
-        var s1 = await service.GetSettingsAsync();
-        s1.BaseCurrency = "CZK";
-        await service.SaveSettingsAsync(s1);
-
-        var s2 = await service.GetSettingsAsync();
-
-        Assert.Equal("CZK", s2.BaseCurrency);
-    }
 }

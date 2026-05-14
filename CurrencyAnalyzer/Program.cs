@@ -1,8 +1,10 @@
 using CurrencyAnalyzer.Components;
+using CurrencyAnalyzer.Core.Clients;
 using CurrencyAnalyzer.Core.Data;
 using CurrencyAnalyzer.Core.Interfaces;
 using CurrencyAnalyzer.Core.Services;
 using Microsoft.EntityFrameworkCore;
+using CurrencyAnalyzer.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +21,8 @@ builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddSingleton<IAuthService, AuthService>();
 builder.Services.AddScoped<MockExchangeRateService>();
-builder.Services.AddScoped<ExchangeRateService>();
+builder.Services.AddHttpClient<ExchangeRateClient>();
+
 //builder.Services.AddScoped<IAuthService, AuthService>();
 
 // DŮLEŽITÉ: Pouze jeden z těchto dvou!
@@ -27,11 +30,12 @@ builder.Services.AddScoped<ExchangeRateService>();
 builder.Services.AddScoped<IExchangeRateService, ExchangeRateService>();     // ← reálné API (až později)
 
 // HTTP client pro případ, že bys chtěl reálnou službu
-builder.Services.AddHttpClient<ExchangeRateService>(client =>
+/*
+builder.Services.AddHttpClient<ExchangeRateClient>(client =>
 {
     client.BaseAddress = new Uri("https://api.exchangerate.host");
     client.Timeout = TimeSpan.FromSeconds(10);
-});
+});*/
 
 var app = builder.Build();
 
@@ -51,6 +55,7 @@ if (!app.Environment.IsDevelopment())
 
 //app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
