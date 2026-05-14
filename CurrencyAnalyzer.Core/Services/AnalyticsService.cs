@@ -92,4 +92,5 @@ public class AnalyticsService : IAnalyticsService
 
         return rates.Values.Average();
     }
+
 }
