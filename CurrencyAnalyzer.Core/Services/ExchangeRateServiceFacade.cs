@@ -25,7 +25,7 @@ public class ExchangeRateServiceFacade
             ?? new Dictionary<string, decimal>();
     }
 
-    public async Task<Dictionary<string, decimal>>
+    public async Task<Dictionary<string, Dictionary<string, decimal>>>
         GetHistoricalRatesAsync(
             string baseCurrency,
             IEnumerable<string> symbols,
@@ -40,6 +40,6 @@ public class ExchangeRateServiceFacade
                 end);
 
         return response?.Rates
-            ?? new Dictionary<string, decimal>();
+            ?? new Dictionary<string, Dictionary<string, decimal>>();
     }
 }

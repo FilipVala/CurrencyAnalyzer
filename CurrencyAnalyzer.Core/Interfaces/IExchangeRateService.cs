@@ -8,7 +8,7 @@ public interface IExchangeRateService
         string baseCurrency,
         IEnumerable<string> symbols);
 
-    Task<ExchangeRateResponse> GetHistoricalRatesAsync(
+    Task<HistoricalRatesResponse?> GetHistoricalRatesAsync(
         string baseCurrency,
         IEnumerable<string> symbols,
         DateTime startDate,
