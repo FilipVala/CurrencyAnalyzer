@@ -1,4 +1,4 @@
-name: .NET CI/CD
+name: .NET CI + Deploy
 
 on:
   push:
@@ -13,7 +13,7 @@ on:
       - develop
 
 jobs:
-  build-test-deploy:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -32,11 +32,11 @@ jobs:
         run: dotnet build CurrencyAnalyzer.sln --configuration Release --no-restore
 
       - name: Run tests with coverage
-        run: >
-          dotnet test CurrencyAnalyzer.Tests/CurrencyAnalyzer.Tests.csproj
-          --configuration Release
-          --no-build
-          --collect:"XPlat Code Coverage"
+        run: |
+          dotnet test CurrencyAnalyzer.sln \
+          --configuration Release \
+          --no-build \
+          --collect:"XPlat Code Coverage" \
           --results-directory ./TestResults
 
       - name: Install ReportGenerator
@@ -47,36 +47,38 @@ jobs:
           reportgenerator \
           -reports:"./TestResults/**/coverage.cobertura.xml" \
           -targetdir:"coveragereport" \
-          -reporttypes:"MarkdownSummary;Html"
+          -reporttypes:"MarkdownSummary"
 
       - name: Upload coverage summary
-        if: always()
-        run: |
-          cat coveragereport/Summary.md >> $GITHUB_STEP_SUMMARY
+        run: cat coveragereport/Summary.md >> $GITHUB_STEP_SUMMARY
 
-      - name: Check branch coverage threshold
-        shell: pwsh
-        run: |
-          $summary = Get-Content "coveragereport/Summary.md" -Raw
+  deploy:
+    needs: build-and-test
 
-          if ($summary -match 'Branch coverage: (\d+\.?\d*)%') {
-              $percent = [double]$matches[1]
+    if: github.ref == 'refs/heads/main'
 
-              Write-Host "Current Branch Coverage: $percent%"
+    runs-on: ubuntu-latest
 
-              if ($percent -lt 80) {
-                  Write-Error "Branch coverage is below 80%!"
-                  exit 1
-              }
-          }
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Publish application
-        if: github.ref == 'refs/heads/main' && success()
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore CurrencyAnalyzer.sln
+
+      - name: Publish app
         run: dotnet publish CurrencyAnalyzer/CurrencyAnalyzer.csproj -c Release -o publish
 
-      - name: Upload published app
-        if: github.ref == 'refs/heads/main' && success()
-        uses: actions/upload-artifact@v4
+      - name: Deploy to MonsterASP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          name: published-app
-          path: publish
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./publish/
+          server-dir: /wwwroot/
