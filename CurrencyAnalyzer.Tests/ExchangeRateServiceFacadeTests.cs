@@ -10,7 +10,6 @@ public class ExchangeRateServiceFacadeTests
     [Fact]
     public async Task GetCurrentRatesForAnalysisAsync_ReturnsData()
     {
-        // Arrange
         var mock = new Mock<IExchangeRateService>();
 
         mock.Setup(x => x.GetLatestRatesAsync(
@@ -28,22 +27,22 @@ public class ExchangeRateServiceFacadeTests
 
         var facade = new ExchangeRateServiceFacade(mock.Object);
 
-        // Act
         var result = await facade.GetCurrentRatesForAnalysisAsync(
             "EUR",
             new[] { "USD", "CZK" });
 
-        // Assert
         Assert.NotNull(result);
+
         Assert.True(result.ContainsKey("USD"));
+
         Assert.Equal(1.1m, result["USD"]);
+
         Assert.Equal(25m, result["CZK"]);
     }
 
     [Fact]
     public async Task GetHistoricalRatesAsync_ReturnsData()
     {
-        // Arrange
         var mock = new Mock<IExchangeRateService>();
 
         mock.Setup(x => x.GetHistoricalRatesAsync(
@@ -51,27 +50,36 @@ public class ExchangeRateServiceFacadeTests
                 It.IsAny<IEnumerable<string>>(),
                 It.IsAny<DateTime>(),
                 It.IsAny<DateTime>()))
-            .ReturnsAsync(new ExchangeRateResponse
+            .ReturnsAsync(new HistoricalRatesResponse
             {
-                Success = true,
-                Rates = new Dictionary<string, decimal>
+                Base = "EUR",
+
+                Rates = new Dictionary<string, Dictionary<string, decimal>>
                 {
-                    { "GBP", 0.85m }
+                    {
+                        "2025-01-01",
+                        new Dictionary<string, decimal>
+                        {
+                            { "GBP", 0.85m }
+                        }
+                    }
                 }
             });
 
         var facade = new ExchangeRateServiceFacade(mock.Object);
 
-        // Act
         var result = await facade.GetHistoricalRatesAsync(
             "EUR",
             new[] { "GBP" },
             DateTime.UtcNow.AddDays(-1),
             DateTime.UtcNow);
 
-        // Assert
         Assert.NotNull(result);
-        Assert.True(result.ContainsKey("GBP"));
-        Assert.Equal(0.85m, result["GBP"]);
+
+        Assert.True(result.ContainsKey("2025-01-01"));
+
+        Assert.Equal(
+            0.85m,
+            result["2025-01-01"]["GBP"]);
     }
 }
