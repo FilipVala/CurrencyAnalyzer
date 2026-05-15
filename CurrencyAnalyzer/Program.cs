@@ -3,62 +3,107 @@ using CurrencyAnalyzer.Core.Clients;
 using CurrencyAnalyzer.Core.Data;
 using CurrencyAnalyzer.Core.Interfaces;
 using CurrencyAnalyzer.Core.Services;
-using Microsoft.EntityFrameworkCore;
 using CurrencyAnalyzer.Middleware;
+
+using Microsoft.EntityFrameworkCore;
+
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddRazorComponents()
-  .AddInteractiveServerComponents();
+// =============================
+// RAZOR COMPONENTS
+// =============================
 
-// === Služby ===
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+
+// =============================
+// MUD BLAZOR
+// =============================
+
+builder.Services.AddMudServices();
+
+// =============================
+// DATABASE
+// =============================
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-  options.UseSqlite("Data Source=CurrencyAnalyzer.db"));
+    options.UseSqlite("Data Source=CurrencyAnalyzer.db"));
+
+// =============================
+// SERVICES
+// =============================
 
 builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
+
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+
 builder.Services.AddScoped<ILogService, LogService>();
+
 builder.Services.AddSingleton<IAuthService, AuthService>();
+
 builder.Services.AddScoped<MockExchangeRateService>();
+
 builder.Services.AddHttpClient<ExchangeRateClient>();
 
-//builder.Services.AddScoped<IAuthService, AuthService>();
+// MOCK / REAL API
 
-// DŮLEŽITÉ: Pouze jeden z těchto dvou!
-//builder.Services.AddScoped<IExchangeRateService, MockExchangeRateService>();     // ← Mock (doporučeno teď)
-builder.Services.AddScoped<IExchangeRateService, ExchangeRateService>();     // ← reálné API (až později)
+// builder.Services.AddScoped<IExchangeRateService, MockExchangeRateService>();
 
-// HTTP client pro případ, že bys chtěl reálnou službu
-/*
-builder.Services.AddHttpClient<ExchangeRateClient>(client =>
-{
-    client.BaseAddress = new Uri("https://api.exchangerate.host");
-    client.Timeout = TimeSpan.FromSeconds(10);
-});*/
+builder.Services.AddScoped<IExchangeRateService, ExchangeRateService>();
+
+// =============================
+// BUILD APP
+// =============================
 
 var app = builder.Build();
 
+// =============================
+// DATABASE INIT
+// =============================
+
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var db = scope.ServiceProvider
+        .GetRequiredService<AppDbContext>();
 
     db.Database.EnsureCreated();
 }
 
-// Configure the HTTP request pipeline.
+// =============================
+// ERROR HANDLING
+// =============================
+
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseExceptionHandler("/Error",
+        createScopeForErrors: true);
+
     app.UseHsts();
 }
 
-//app.UseHttpsRedirection();
+// =============================
+// MIDDLEWARE
+// =============================
+
+// app.UseHttpsRedirection();
+
 app.UseStaticFiles();
+
 app.UseMiddleware<GlobalExceptionMiddleware>();
+
 app.UseAntiforgery();
 
+// =============================
+// ROUTING
+// =============================
+
 app.MapRazorComponents<App>()
-  .AddInteractiveServerRenderMode();
+    .AddInteractiveServerRenderMode();
+
+// =============================
+// RUN
+// =============================
 
 app.Run();

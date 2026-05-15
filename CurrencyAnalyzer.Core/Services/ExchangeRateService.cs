@@ -8,8 +8,7 @@ public class ExchangeRateService : IExchangeRateService
 {
     private readonly HttpClient _httpClient;
 
-    public ExchangeRateService(
-        HttpClient httpClient)
+    public ExchangeRateService(HttpClient httpClient)
     {
         _httpClient = httpClient;
     }
@@ -60,7 +59,7 @@ public class ExchangeRateService : IExchangeRateService
         return result;
     }
 
-    public async Task<ExchangeRateResponse> GetHistoricalRatesAsync(
+    public async Task<HistoricalRatesResponse?> GetHistoricalRatesAsync(
         string baseCurrency,
         IEnumerable<string> symbols,
         DateTime startDate,
@@ -71,41 +70,28 @@ public class ExchangeRateService : IExchangeRateService
 
         var symbolsString = string.Join(",", filteredSymbols);
 
-        var formattedDate = startDate.ToString("yyyy-MM-dd");
+        var start = startDate.ToString("yyyy-MM-dd");
+
+        var end = endDate.ToString("yyyy-MM-dd");
 
         var url =
-            $"https://api.frankfurter.app/{formattedDate}?from={baseCurrency}&to={symbolsString}";
+            $"https://api.frankfurter.app/{start}..{end}?from={baseCurrency}&to={symbolsString}";
 
         var response = await _httpClient.GetAsync(url);
 
         if (!response.IsSuccessStatusCode)
         {
-            return new ExchangeRateResponse
-            {
-                Success = false,
-                Rates = new Dictionary<string, decimal>()
-            };
+            return null;
         }
 
         var json = await response.Content.ReadAsStringAsync();
 
-        var result = JsonSerializer.Deserialize<ExchangeRateResponse>(
+        var result = JsonSerializer.Deserialize<HistoricalRatesResponse>(
             json,
             new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
-
-        if (result == null)
-        {
-            return new ExchangeRateResponse
-            {
-                Success = false,
-                Rates = new Dictionary<string, decimal>()
-            };
-        }
-
-        result.Success = true;
 
         return result;
     }

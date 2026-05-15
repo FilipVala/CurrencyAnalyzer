@@ -1,6 +1,7 @@
 ﻿@page "/dashboard"
 @rendermode InteractiveServer
 
+@using MudBlazor
 @using CurrencyAnalyzer.Core.Interfaces
 @using CurrencyAnalyzer.Core.Models
 
@@ -132,6 +133,25 @@ else if (analysisResult != null)
         </div>
 
     </div>
+
+    <div class="card mt-4">
+
+        <div class="card-header">
+            <h4 class="mb-0">Exchange Rate Chart</h4>
+        </div>
+
+        <div class="card-body">
+
+            <MudChart T="double"
+                      ChartType="ChartType.Bar"
+                      ChartSeries="@chartSeries"
+                      XAxisLabels="@xAxisLabels"
+                      Width="100%"
+                      Height="400px" />
+
+        </div>
+
+    </div>
 }
 
 @code {
@@ -142,11 +162,16 @@ else if (analysisResult != null)
 
     private string? errorMessage;
 
+    private string[] xAxisLabels = Array.Empty<string>();
+
+    private List<ChartSeries<double>> chartSeries = new();
+
     protected override async Task OnInitializedAsync()
     {
-        @if (!AuthService.IsLoggedIn())
+        if (!AuthService.IsLoggedIn())
         {
             Navigation.NavigateTo("/login");
+            return;
         }
 
         await LoadDashboardAsync();
@@ -158,11 +183,15 @@ else if (analysisResult != null)
         {
             isLoading = true;
 
+            errorMessage = null;
+
             var settings = await UserSettingsService.GetSettingsAsync();
 
             analysisResult = await AnalyticsService.PerformFullAnalysisAsync(
                 settings.BaseCurrency,
                 settings.SelectedCurrencies);
+
+            GenerateChart();
         }
         catch (Exception ex)
         {
@@ -172,6 +201,25 @@ else if (analysisResult != null)
         {
             isLoading = false;
         }
+    }
+
+    private void GenerateChart()
+    {
+        if (analysisResult == null || !analysisResult.Rates.Any())
+            return;
+
+        xAxisLabels = analysisResult.Rates.Keys.ToArray();
+
+        chartSeries = new List<ChartSeries<double>>
+        {
+            new ChartSeries<double>
+            {
+                Name = "Exchange Rates",
+                Data = analysisResult.Rates.Values
+                    .Select(r => (double)r)
+                    .ToList()
+            }
+        };
     }
 
     private async Task ReloadDashboard()
@@ -196,3 +244,4 @@ else if (analysisResult != null)
         Navigation.NavigateTo("/login", forceLoad: true);
     }
 }
+

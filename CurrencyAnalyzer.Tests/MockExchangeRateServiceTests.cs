@@ -1,12 +1,11 @@
 ﻿using CurrencyAnalyzer.Core.Services;
-using Xunit;
 
 namespace CurrencyAnalyzer.Tests;
 
 public class MockExchangeRateServiceTests
 {
     [Fact]
-    public async Task GetLatestRatesAsync_ReturnsRates()
+    public async Task GetLatestRatesAsync_ReturnsMockData()
     {
         var service = new MockExchangeRateService();
 
@@ -14,86 +13,28 @@ public class MockExchangeRateServiceTests
             "EUR",
             new[] { "USD", "CZK" });
 
-        Assert.True(result.Success);
+        Assert.NotNull(result);
 
         Assert.Equal("EUR", result.Base);
 
         Assert.True(result.Rates.ContainsKey("USD"));
+
+        Assert.True(result.Rates.ContainsKey("CZK"));
     }
 
     [Fact]
-    public async Task GetHistoricalRatesAsync_ReturnsRates()
+    public async Task GetHistoricalRatesAsync_ReturnsHistoricalData()
     {
         var service = new MockExchangeRateService();
 
         var result = await service.GetHistoricalRatesAsync(
             "EUR",
             new[] { "USD" },
-            DateTime.UtcNow.AddDays(-1),
+            DateTime.UtcNow.AddDays(-7),
             DateTime.UtcNow);
 
-        Assert.True(result.Success);
-    }
+        Assert.NotNull(result);
 
-    [Fact]
-    public async Task GetCurrentRatesForAnalysisAsync_ReturnsRates()
-    {
-        var service = new MockExchangeRateService();
-
-        var result = await service.GetCurrentRatesForAnalysisAsync(
-            "EUR",
-            new[] { "USD", "CZK" });
-
-        Assert.True(result.ContainsKey("USD"));
-
-        Assert.True(result.ContainsKey("CZK"));
-    }
-
-    [Fact]
-    public async Task GetCurrentRatesForAnalysisAsync_ReturnsJpyRate()
-    {
-        var service = new MockExchangeRateService();
-
-        var result = await service.GetCurrentRatesForAnalysisAsync(
-            "EUR",
-            new[] { "JPY" });
-
-        Assert.Equal(160.0m, result["JPY"]);
-    }
-
-    [Fact]
-    public async Task GetCurrentRatesForAnalysisAsync_ReturnsChfRate()
-    {
-        var service = new MockExchangeRateService();
-
-        var result = await service.GetCurrentRatesForAnalysisAsync(
-            "EUR",
-            new[] { "CHF" });
-
-        Assert.Equal(0.96m, result["CHF"]);
-    }
-
-    [Fact]
-    public async Task GetCurrentRatesForAnalysisAsync_ReturnsPlnRate()
-    {
-        var service = new MockExchangeRateService();
-
-        var result = await service.GetCurrentRatesForAnalysisAsync(
-            "EUR",
-            new[] { "PLN" });
-
-        Assert.Equal(4.32m, result["PLN"]);
-    }
-
-    [Fact]
-    public async Task GetCurrentRatesForAnalysisAsync_ReturnsDefaultRate()
-    {
-        var service = new MockExchangeRateService();
-
-        var result = await service.GetCurrentRatesForAnalysisAsync(
-            "EUR",
-            new[] { "ABC" });
-
-        Assert.Equal(1.05m, result["ABC"]);
+        Assert.NotEmpty(result.Rates);
     }
 }

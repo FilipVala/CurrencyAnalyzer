@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Text;
 using System.Threading;
+using CurrencyAnalyzer.Core.DTOs;
 using CurrencyAnalyzer.Core.Services;
 using Xunit;
 
@@ -23,7 +24,6 @@ public class ExchangeRateServiceTests
     [Fact]
     public async Task GetLatestRatesAsync_ReturnsRates()
     {
-        // arrange
         var json = """
         {
             "base": "EUR",
@@ -37,12 +37,10 @@ public class ExchangeRateServiceTests
 
         var service = CreateService(json);
 
-        // act
         var result = await service.GetLatestRatesAsync(
             "EUR",
             new[] { "USD", "CZK" });
 
-        // assert
         Assert.True(result.Success);
 
         Assert.Equal("EUR", result.Base);
@@ -53,14 +51,18 @@ public class ExchangeRateServiceTests
     }
 
     [Fact]
-    public async Task GetHistoricalRatesAsync_ReturnsData()
+    public async Task GetHistoricalRatesAsync_ReturnsHistoricalData()
     {
         var json = """
         {
             "base": "EUR",
-            "date": "2026-05-10",
             "rates": {
-                "USD": 1.1
+                "2025-01-01": {
+                    "USD": 1.1
+                },
+                "2025-01-02": {
+                    "USD": 1.2
+                }
             }
         }
         """;
@@ -70,16 +72,22 @@ public class ExchangeRateServiceTests
         var result = await service.GetHistoricalRatesAsync(
             "EUR",
             new[] { "USD" },
-            DateTime.UtcNow.AddDays(-1),
+            DateTime.UtcNow.AddDays(-30),
             DateTime.UtcNow);
 
         Assert.NotNull(result);
 
-        Assert.True(result.Success);
+        Assert.Equal("EUR", result!.Base);
 
-        Assert.Single(result.Rates);
+        Assert.Equal(2, result.Rates.Count);
 
-        Assert.Equal(1.1m, result.Rates["USD"]);
+        Assert.Equal(
+            1.1m,
+            result.Rates["2025-01-01"]["USD"]);
+
+        Assert.Equal(
+            1.2m,
+            result.Rates["2025-01-02"]["USD"]);
     }
 
     [Fact]

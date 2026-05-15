@@ -1,6 +1,5 @@
 ﻿using CurrencyAnalyzer.Core.DTOs;
 using CurrencyAnalyzer.Core.Interfaces;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CurrencyAnalyzer.Core.Services;
 
@@ -9,11 +8,13 @@ namespace CurrencyAnalyzer.Core.Services;
 /// </summary>
 public class MockExchangeRateService : IExchangeRateService
 {
-    public Task<ExchangeRateResponse> GetLatestRatesAsync(string baseCurrency, IEnumerable<string> symbols)
+    public Task<ExchangeRateResponse> GetLatestRatesAsync(
+        string baseCurrency,
+        IEnumerable<string> symbols)
     {
         var rates = new Dictionary<string, decimal>();
 
-        // Základní měna má vždy 1.0
+        // základní měna
         rates[baseCurrency] = 1.0m;
 
         foreach (var symbol in symbols.Where(s => s != baseCurrency))
@@ -30,13 +31,41 @@ public class MockExchangeRateService : IExchangeRateService
         });
     }
 
-    public Task<ExchangeRateResponse> GetHistoricalRatesAsync(
-        string baseCurrency,
-        IEnumerable<string> symbols,
-        DateTime startDate,
-        DateTime endDate)
+    public Task<HistoricalRatesResponse?> GetHistoricalRatesAsync(
+    string baseCurrency,
+    IEnumerable<string> symbols,
+    DateTime startDate,
+    DateTime endDate)
     {
-        return GetLatestRatesAsync(baseCurrency, symbols); // pro mock stačí
+        var historicalRates =
+            new Dictionary<string, Dictionary<string, decimal>>();
+
+        for (var date = startDate.Date;
+             date <= endDate.Date;
+             date = date.AddDays(1))
+        {
+            var dailyRates = new Dictionary<string, decimal>();
+
+            foreach (var symbol in symbols)
+            {
+                if (symbol == baseCurrency)
+                    continue;
+
+                dailyRates[symbol] =
+                    GetMockRate(baseCurrency, symbol)
+                    + Random.Shared.Next(-5, 5) * 0.01m;
+            }
+
+            historicalRates[date.ToString("yyyy-MM-dd")]
+                = dailyRates;
+        }
+
+        return Task.FromResult<HistoricalRatesResponse?>(
+            new HistoricalRatesResponse
+            {
+                Base = baseCurrency,
+                Rates = historicalRates
+            });
     }
 
     public Task<Dictionary<string, decimal>> GetCurrentRatesForAnalysisAsync(
@@ -56,7 +85,9 @@ public class MockExchangeRateService : IExchangeRateService
         return Task.FromResult(rates);
     }
 
-    private decimal GetMockRate(string baseCurrency, string targetCurrency)
+    private decimal GetMockRate(
+        string baseCurrency,
+        string targetCurrency)
     {
         return targetCurrency switch
         {
@@ -68,5 +99,18 @@ public class MockExchangeRateService : IExchangeRateService
             "PLN" => 4.32m,
             _ => 1.05m
         };
+    }
+
+    private decimal GetMockHistoricalRate(
+        string baseCurrency,
+        string targetCurrency,
+        DateTime date)
+    {
+        var baseRate = GetMockRate(baseCurrency, targetCurrency);
+
+        var variation =
+            (decimal)Math.Sin(date.DayOfYear * 0.3) * 0.05m;
+
+        return Math.Round(baseRate + variation, 4);
     }
 }
